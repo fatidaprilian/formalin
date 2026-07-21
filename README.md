@@ -1,54 +1,42 @@
 # Formalin
 
-Formalin is a temporal rebuildability auditor for software projects. It executes an arbitrary build command inside an isolated bubblewrap sandbox, records all real input files, network connections, and system toolchains accessed during the build using strace, and generates a detailed rebuildability risk report.
+Formalin is a visual perception runtime for AI coding agents. It connects directly to your web application via Chrome DevTools Protocol (CDP), extracts rendered scene graphs, performs responsive viewport continuum sweeps, evaluates design intent consistency, and maps visual layout issues directly back to source code locations (`Component.tsx:line`).
 
 ## How it Works
 
-1. **Isolation:** Formalin snapshots your source repository to a temporary workspace and runs the build command inside a Bubblewrap container. This isolates the build from ambient host configurations (such as user-level SSH/AWS credentials or system configs) that could cause "works on my machine" issues.
-2. **System Call Tracing:** During execution, it runs the sandbox under `strace`, capturing file accesses (`open`, `openat`), process spawns (`execve`), and network attempts (`connect`).
-3. **Ecosystem Correlation:** It correlates network destinations with your project's lockfiles (e.g. `package-lock.json` for npm) to determine if a dependency is resolved and verified by content integrity hashes.
-4. **Temporal Risk Analysis:** It evaluates rules (DG001 - DG008) to detect mutable resources, floating git references, and host toolchain drift that could break builds in the future.
-
-## Risk Rules
-
-- **DG001 (Mutable Remote URL):** Using commands like curl or wget to fetch files from mutable URLs (e.g. containing latest, master, or missing version tags).
-- **DG002 (Floating Git Reference):** Checking out branches or tags instead of pinning specific 40-character commit hashes.
-- **DG003 (Unresolved Network Dependency):** Connections made during the build that cannot be correlated to a verified package integrity hash.
-- **DG004 (Ambient Host Toolchain):** Reading compilers or headers directly from the host system (e.g., /usr/bin/gcc).
-- **DG005 (Input Outside Project):** File accesses pointing outside of the workspace directory.
-- **DG007 (Missing Integrity Metadata):** Dependencies resolved without content integrity metadata.
-
-## Prerequisites
-
-Formalin requires the following tools to be installed on the host system:
-- **Go** (version 1.18 or later)
-- **bubblewrap** (bwrap)
-- **strace**
-
-On Debian/Ubuntu systems, install dependencies using:
-```bash
-sudo apt-get update && sudo apt-get install -y bubblewrap strace
-```
+1. **Browser Telemetry:** Formalin opens your web application in headless Chrome via CDP and extracts the DOM tree, computed CSS styles, font metrics, and bounding boxes.
+2. **Render Scene Graph:** It constructs a visual hierarchy tree, calculating visual weight, typography roles, and spacing intervals.
+3. **Responsive Inspection:** It evaluates the UI across multiple viewport breakpoints (375px, 768px, 1024px, 1440px) to detect content overflow and layout breaks.
+4. **Source Attribution:** It maps visual findings back to source code lines in your workspace.
+5. **Agent Critique:** It outputs a lightweight `.formalin/critique.json` file for AI coding agents (Claude Code, Cursor, Codex, Gemini CLI) and `formalin-summary.md` for human review.
 
 ## Installation
 
-Clone the repository and build the binary:
+Run directly using npx:
 ```bash
-go build ./cmd/formalin
+npx formalin inspect http://localhost:3000
+```
+
+Or install globally:
+```bash
+npm install -g formalin
 ```
 
 ## Usage
 
-Audit your build command:
+Inspect a running development server:
 ```bash
-./formalin record -- <build-command>
+formalin inspect http://localhost:3000
 ```
 
-Example:
-```bash
-./formalin record -- npm run build
-```
+### Options
+- `--output-dir <path>`: Directory to write critique reports to (default: `.formalin`).
+- `--viewports <list>`: Comma-separated list of viewports (default: `375,768,1024,1440`).
+- `--remote-debugging-port <port>`: Connect to an existing Chrome remote debugging port.
+- `--verbose`: Enable detailed log output.
 
-This will generate two report files in your output directory:
-1. `formalin.build.json` - Complete machine-readable observation database.
-2. `formalin-report.md` - Human-readable Markdown summary of findings.
+## Outputs
+
+Formalin generates two report files in `.formalin/`:
+1. `.formalin/critique.json`: Machine-readable visual audit database for AI agents.
+2. `.formalin/formalin-summary.md`: Human-readable Markdown summary.

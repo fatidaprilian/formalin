@@ -1,0 +1,33 @@
+{
+  "name": "formalin",
+  "version": "0.1.0",
+  "description": "The visual perception runtime for AI coding agents",
+  "main": "dist/index.js",
+  "bin": {
+    "formalin": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "node --test dist/**/*.test.js"
+  },
+  "keywords": [
+    "perception",
+    "design",
+    "ui",
+    "ai-agents",
+    "browser",
+    "cdp",
+    "visual-runtime"
+  ],
+  "author": "fatidaprilian",
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^12.0.0",
+    "puppeteer-core": "^22.6.0",
+    "source-map": "^0.7.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3"
+  }
+}
