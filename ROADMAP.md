@@ -8,7 +8,7 @@ This document defines the development roadmap for Formalin. Use the checkboxes t
 - [x] Phase: Canonical Build Observation
 - [x] Phase: Sandbox and Ecosystem Adapter
 - [x] Phase: Rebuildability Risk Engine
-- [ ] Phase: Verification and CI Integration
+- [x] Phase: Verification and CI Integration
 - [ ] Phase: Adapter SDK and Cargo Ecosystem
 - [ ] Phase: Supply-Chain Integration
 - [ ] Phase: Performance and Portability
@@ -66,14 +66,14 @@ Goal: Evaluate observed files and connections against risk rules.
 
 ---
 
-## Phase: Verification and CI Integration (Next Up)
+## Phase: Verification and CI Integration (Completed)
 
 Goal: Compare current builds against baselines and provide CI integration tooling.
 
-- [ ] Implement baseline recording subcommand
-- [ ] Implement verify command to compare current build with baseline database
-- [ ] Detect drift: changed compiler version, modified file checksums, new network requests
-- [ ] Support offline verification (blocking network namespace in sandbox)
+- [x] Implement baseline recording subcommand
+- [x] Implement verify command to compare current build with baseline database
+- [x] Detect drift: changed compiler version, modified file checksums, new network requests
+- [x] Support offline verification (blocking network namespace in sandbox)
 - [ ] Provide pre-built GitHub Action and GitLab CI integration configuration examples
 
 ---

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
@@ -12,31 +13,37 @@ import (
 
 	"formalin/internal/adapters/npm"
 	"formalin/internal/analyzer"
+	"formalin/internal/events"
 	"formalin/internal/report"
 	"formalin/internal/sandbox"
 	"formalin/internal/tracer"
+	"formalin/internal/verifier"
 )
 
 func main() {
-	// Custom flag parsing for subcommand
 	if len(os.Args) < 2 {
 		printUsage()
 		os.Exit(1)
 	}
 
 	subcmd := os.Args[1]
-	if subcmd != "record" {
+	if subcmd != "record" && subcmd != "verify" {
 		fmt.Printf("Error: unknown command '%s'\n\n", subcmd)
 		printUsage()
 		os.Exit(1)
 	}
 
 	recordFlags := flag.NewFlagSet("record", flag.ExitOnError)
-	outputDirFlag := recordFlags.String("output-dir", ".", "Directory to write results to")
-	verboseFlag := recordFlags.Bool("verbose", false, "Enable verbose debug logs")
+	recordOutputDir := recordFlags.String("output-dir", ".", "Directory to write results to")
+	recordVerbose := recordFlags.Bool("verbose", false, "Enable verbose debug logs")
+	recordOffline := recordFlags.Bool("offline", false, "Disable network access inside sandbox")
 
-	// Parse flags following 'record'
-	// We need to parse everything until '--'
+	verifyFlags := flag.NewFlagSet("verify", flag.ExitOnError)
+	verifyBaseline := verifyFlags.String("baseline", "", "Path to baseline formalin.build.json")
+	verifyVerbose := verifyFlags.Bool("verbose", false, "Enable verbose debug logs")
+	verifyOffline := verifyFlags.Bool("offline", false, "Disable network access inside sandbox")
+
+	// Parse flags following subcommand
 	doubleDashIndex := -1
 	for i, arg := range os.Args {
 		if arg == "--" {
@@ -46,10 +53,18 @@ func main() {
 	}
 
 	var err error
-	if doubleDashIndex != -1 {
-		err = recordFlags.Parse(os.Args[2:doubleDashIndex])
+	if subcmd == "record" {
+		if doubleDashIndex != -1 {
+			err = recordFlags.Parse(os.Args[2:doubleDashIndex])
+		} else {
+			err = recordFlags.Parse(os.Args[2:])
+		}
 	} else {
-		err = recordFlags.Parse(os.Args[2:])
+		if doubleDashIndex != -1 {
+			err = verifyFlags.Parse(os.Args[2:doubleDashIndex])
+		} else {
+			err = verifyFlags.Parse(os.Args[2:])
+		}
 	}
 	if err != nil {
 		fmt.Printf("Error parsing flags: %v\n", err)
@@ -66,6 +81,11 @@ func main() {
 		os.Exit(1)
 	}
 
+	if subcmd == "verify" && *verifyBaseline == "" {
+		fmt.Println("Error: --baseline <path> is required for the verify command")
+		os.Exit(1)
+	}
+
 	// 1. Resolve workspace path (current working directory)
 	workspaceDir, err := os.Getwd()
 	if err != nil {
@@ -73,9 +93,25 @@ func main() {
 		os.Exit(1)
 	}
 
-	if *verboseFlag {
+	isOffline := false
+	verboseLog := false
+	outputDir := "."
+
+	if subcmd == "record" {
+		isOffline = *recordOffline
+		verboseLog = *recordVerbose
+		outputDir = *recordOutputDir
+	} else {
+		isOffline = *verifyOffline
+		verboseLog = *verifyVerbose
+	}
+
+	if verboseLog {
 		fmt.Printf("Auditing workspace: %s\n", workspaceDir)
 		fmt.Printf("Target build command: %s\n", strings.Join(buildCmd, " "))
+		if isOffline {
+			fmt.Println("Offline sandbox enabled (network disabled).")
+		}
 	}
 
 	// 2. Setup temporary observation sandbox workspace
@@ -109,6 +145,7 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+	sb.DisableNetwork = isOffline
 
 	tr, err := tracer.NewTracer(logDir)
 	if err != nil {
@@ -142,38 +179,88 @@ func main() {
 		os.Exit(1)
 	}
 
-	// 6. Generate reports
-	absOutputDir, err := filepath.Abs(*outputDirFlag)
-	if err != nil {
-		absOutputDir = *outputDirFlag
+	// 6. Handle Command Actions
+	if subcmd == "record" {
+		absOutputDir, err := filepath.Abs(outputDir)
+		if err != nil {
+			absOutputDir = outputDir
+		}
+
+		jsonPath := filepath.Join(absOutputDir, "formalin.build.json")
+		mdPath := filepath.Join(absOutputDir, "formalin-report.md")
+
+		fmt.Printf("Writing reports to %s...\n", absOutputDir)
+		if err := report.WriteJSON(obs, jsonPath); err != nil {
+			fmt.Printf("Error writing JSON build database: %v\n", err)
+			os.Exit(1)
+		}
+
+		if err := report.WriteMarkdown(obs, mdPath); err != nil {
+			fmt.Printf("Error writing Markdown report: %v\n", err)
+			os.Exit(1)
+		}
+
+		fmt.Println("Audit complete! Verification reports generated:")
+		fmt.Printf("  - Database: %s\n", jsonPath)
+		fmt.Printf("  - Risk Report: %s\n", mdPath)
+
+	} else if subcmd == "verify" {
+		baselinePath := *verifyBaseline
+		baselineData, err := os.ReadFile(baselinePath)
+		if err != nil {
+			fmt.Printf("Error reading baseline file: %v\n", err)
+			os.Exit(1)
+		}
+
+		var baselineObs events.BuildObservation
+		if err := json.Unmarshal(baselineData, &baselineObs); err != nil {
+			fmt.Printf("Error parsing baseline JSON: %v\n", err)
+			os.Exit(1)
+		}
+
+		fmt.Println("Comparing build observation against baseline for drift...")
+		reportDiff := verifier.Verify(&baselineObs, obs)
+
+		if reportDiff.HasDrift() {
+			fmt.Println("Drift detected between baseline and current build:")
+			if reportDiff.PlatformChanged {
+				fmt.Printf("  Platform changed: OS: %s -> %s, Arch: %s -> %s\n", reportDiff.PlatformOld.OS, reportDiff.PlatformNew.OS, reportDiff.PlatformOld.Architecture, reportDiff.PlatformNew.Architecture)
+			}
+			for _, p := range reportDiff.ChangedProcesses {
+				fmt.Printf("  Process drift: %s\n", p)
+			}
+			for _, i := range reportDiff.MissingInputs {
+				fmt.Printf("  Missing Input file: %s\n", i)
+			}
+			for _, i := range reportDiff.NewInputs {
+				fmt.Printf("  New Input file: %s\n", i)
+			}
+			for _, i := range reportDiff.ChangedInputs {
+				fmt.Printf("  Changed Input file: %s\n", i)
+			}
+			for _, n := range reportDiff.NewNetworkHosts {
+				fmt.Printf("  New Network Access: %s\n", n)
+			}
+			for _, f := range reportDiff.NewFindings {
+				fmt.Printf("  New Risk Finding: %s\n", f)
+			}
+			os.Exit(1)
+		} else {
+			fmt.Println("No drift detected! The build is fully consistent with the baseline.")
+		}
 	}
-
-	jsonPath := filepath.Join(absOutputDir, "formalin.build.json")
-	mdPath := filepath.Join(absOutputDir, "formalin-report.md")
-
-	fmt.Printf("Writing reports to %s...\n", absOutputDir)
-	if err := report.WriteJSON(obs, jsonPath); err != nil {
-		fmt.Printf("Error writing JSON build database: %v\n", err)
-		os.Exit(1)
-	}
-
-	if err := report.WriteMarkdown(obs, mdPath); err != nil {
-		fmt.Printf("Error writing Markdown report: %v\n", err)
-		os.Exit(1)
-	}
-
-	fmt.Println("Audit complete! Verification reports generated:")
-	fmt.Printf("  - Database: %s\n", jsonPath)
-	fmt.Printf("  - Risk Report: %s\n", mdPath)
 }
 
 func printUsage() {
 	fmt.Println("Formalin - A temporal rebuildability auditor for software projects")
 	fmt.Println("Usage:")
 	fmt.Println("  formalin record [options] -- <build-command> [args...]")
+	fmt.Println("  formalin verify --baseline <path> [options] -- <build-command> [args...]")
 	fmt.Println()
 	fmt.Println("Options:")
-	fmt.Println("  --output-dir <path>   Directory where audit results are written (default: \".\")")
+	fmt.Println("  --output-dir <path>   Directory where audit results are written (record only, default: \".\")")
+	fmt.Println("  --baseline <path>     Path to baseline formalin.build.json (verify only)")
+	fmt.Println("  --offline             Disable network namespace inside sandbox")
 	fmt.Println("  --verbose             Enable verbose logging output")
 }
 
