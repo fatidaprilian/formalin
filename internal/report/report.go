@@ -27,7 +27,7 @@ func WriteMarkdown(obs *events.BuildObservation, outputPath string) error {
 
 	buf.WriteString("## Executive Summary\n")
 	if len(obs.Findings) == 0 {
-		buf.WriteString("✅ **Secure & Deterministic!** No rebuildability risks were detected during the build audit.\n\n")
+		buf.WriteString("**Secure & Deterministic!** No rebuildability risks were detected during the build audit.\n\n")
 	} else {
 		criticalCount := 0
 		highCount := 0
@@ -42,7 +42,7 @@ func WriteMarkdown(obs *events.BuildObservation, outputPath string) error {
 				mediumCount++
 			}
 		}
-		buf.WriteString(fmt.Sprintf("⚠️ **Rebuildability Risks Detected!** The build completed, but the following temporal risks were found:\n"))
+		buf.WriteString(fmt.Sprintf("**Rebuildability Risks Detected!** The build completed, but the following temporal risks were found:\n"))
 		buf.WriteString(fmt.Sprintf("- **Critical**: %d\n", criticalCount))
 		buf.WriteString(fmt.Sprintf("- **High**: %d\n", highCount))
 		buf.WriteString(fmt.Sprintf("- **Medium**: %d\n\n", mediumCount))
@@ -59,13 +59,13 @@ func WriteMarkdown(obs *events.BuildObservation, outputPath string) error {
 			badge := ""
 			switch strings.ToLower(f.Severity) {
 			case "critical":
-				badge = "🔴 **CRITICAL**"
+				badge = "**CRITICAL**"
 			case "high":
-				badge = "orange; 🟠 **HIGH**"
+				badge = "**HIGH**"
 			case "medium":
-				badge = "🟡 **MEDIUM**"
+				badge = "**MEDIUM**"
 			default:
-				badge = "⚪ **INFO**"
+				badge = "**INFO**"
 			}
 			buf.WriteString(fmt.Sprintf("### %s: %s\n", badge, f.Rule))
 			buf.WriteString(fmt.Sprintf("%s\n\n", f.Message))
@@ -85,9 +85,9 @@ func WriteMarkdown(obs *events.BuildObservation, outputPath string) error {
 		buf.WriteString("| Host | Port | Process | Correlated Lockfile |\n")
 		buf.WriteString("| :--- | :--- | :--- | :--- |\n")
 		for _, netCall := range obs.Network {
-			corr := "❌ No"
+			corr := "No"
 			if netCall.ResolvedMaterial {
-				corr = "✅ Yes (npm-integrity)"
+				corr = "Yes (npm-integrity)"
 			}
 			buf.WriteString(fmt.Sprintf("| %s | %d | `%s` | %s |\n", netCall.Host, netCall.Port, netCall.Process, corr))
 		}
