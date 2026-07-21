@@ -1,0 +1,6 @@
+# Compiled binary
+formalin
+
+# Formalin reports
+formalin.build.json
+formalin-report.md

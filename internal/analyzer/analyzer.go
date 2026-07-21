@@ -160,6 +160,9 @@ func (a *Analyzer) Analyze(rawEvents []events.Event, materials []events.Material
 }
 
 func (a *Analyzer) resolveToHost(sandboxPath string) string {
+	if strings.HasPrefix(sandboxPath, "/newroot") {
+		sandboxPath = strings.TrimPrefix(sandboxPath, "/newroot")
+	}
 	if strings.HasPrefix(sandboxPath, "/workspace") {
 		rel := strings.TrimPrefix(sandboxPath, "/workspace")
 		return filepath.Join(a.SnapshotDir, rel)
@@ -168,19 +171,38 @@ func (a *Analyzer) resolveToHost(sandboxPath string) string {
 }
 
 func (a *Analyzer) classifyPathOrigin(sandboxPath string) string {
+	if strings.HasPrefix(sandboxPath, "/newroot") {
+		sandboxPath = strings.TrimPrefix(sandboxPath, "/newroot")
+	}
+
+	if !strings.HasPrefix(sandboxPath, "/") {
+		// Relative path - check if it exists in the original workspace
+		origPath := filepath.Join(a.WorkspaceDir, sandboxPath)
+		if _, err := os.Stat(origPath); err == nil {
+			return "source"
+		}
+		return "temporary"
+	}
+
 	if strings.HasPrefix(sandboxPath, "/workspace") {
 		return "source"
 	}
-	if strings.HasPrefix(sandboxPath, "/usr/include") || strings.HasPrefix(sandboxPath, "/usr/lib/gcc") || strings.HasPrefix(sandboxPath, "/usr/bin") {
+	if strings.HasPrefix(sandboxPath, "/usr") || strings.HasPrefix(sandboxPath, "/lib") || strings.HasPrefix(sandboxPath, "/lib64") || strings.HasPrefix(sandboxPath, "/bin") || strings.HasPrefix(sandboxPath, "/sbin") || strings.HasPrefix(sandboxPath, "/etc") {
 		return "host-toolchain"
 	}
-	if strings.HasPrefix(sandboxPath, "/tmp") {
+	if strings.HasPrefix(sandboxPath, "/tmp") || strings.HasPrefix(sandboxPath, "/home/build") {
 		return "temporary"
 	}
 	return "external-user"
 }
 
 func (a *Analyzer) isNoisySystemFile(path string) bool {
+	if strings.HasPrefix(path, "/newroot") {
+		path = strings.TrimPrefix(path, "/newroot")
+	}
+	if path == "/" || path == "/proc" || path == "/sys" || path == "/dev" {
+		return true
+	}
 	noisePrefixes := []string{
 		"/proc/", "/sys/", "/dev/",
 		"/etc/ld.so.cache", "/etc/ld.so.preload",
