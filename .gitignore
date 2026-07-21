@@ -1,6 +1,6 @@
-# Compiled binary
-formalin
+# Node.js dependencies & build output
+node_modules
+dist
 
 # Formalin reports
-formalin.build.json
-formalin-report.md
+.formalin
