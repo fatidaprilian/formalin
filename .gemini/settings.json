@@ -1,0 +1,38 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "npx formalin brief"
+      }
+    ],
+    "BeforeToolExecution": [
+      {
+        "matcher": "write_to_file|replace_file_content|multi_replace_file_content",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx formalin gate \"$TOOL_INPUT_CONTENT\""
+          }
+        ]
+      }
+    ],
+    "AfterToolExecution": [
+      {
+        "matcher": "write_to_file|replace_file_content|multi_replace_file_content",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx formalin snapshot \"$TOOL_INPUT_FILE_PATH\""
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "type": "command",
+        "command": "npx formalin check"
+      }
+    ]
+  }
+}

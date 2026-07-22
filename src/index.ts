@@ -26,15 +26,16 @@ program
     const profile = getInitialProfile();
     saveProfile(profile, rootDir);
 
-    const { claudePath, gitHookPath } = generateAgentHooks(rootDir);
+    const { claudePath, geminiPath, gitHookPath } = generateAgentHooks(rootDir);
 
     console.log('Formalin v1.0 initialized!');
     console.log(`- Preference profile: .formalin/profile.json`);
-    console.log(`- Agent lifecycle hooks: ${claudePath}`);
+    console.log(`- Claude Code hooks: ${claudePath}`);
+    console.log(`- Gemini CLI / Antigravity hooks: ${geminiPath}`);
     if (gitHookPath) {
       console.log(`- Git post-commit hook: ${gitHookPath}`);
     }
-    console.log('\nFormalin is active and running 100% automatically in the background!');
+    console.log('\nFormalin is active and running 100% automatically across multiple agents!');
   });
 
 program
