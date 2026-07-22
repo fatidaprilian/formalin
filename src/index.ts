@@ -20,16 +20,20 @@ program
 
 program
   .command('init')
-  .description('Initialize local preference profile, agent hooks, and Git post-commit hook')
-  .action(() => {
-    const rootDir = process.cwd();
-    const profile = getInitialProfile();
-    saveProfile(profile, rootDir);
+  .option('--local', 'Generate hook settings inside local project directory instead of global home directory')
+  .description('Initialize preference profile and agent hooks (globally by default, zero root clutter)')
+  .action((options: { local?: boolean }) => {
+    const isGlobal = !options.local;
+    const targetDir = isGlobal ? os.homedir() : process.cwd();
 
-    const { claudePath, geminiPath, gitHookPath } = generateAgentHooks(rootDir);
+    const profile = getInitialProfile();
+    saveProfile(profile, process.cwd());
+
+    const { claudePath, geminiPath, gitHookPath } = generateAgentHooks(targetDir, isGlobal);
 
     console.log('Formalin v1.0 initialized!');
     console.log(`- Preference profile: .formalin/profile.json`);
+    console.log(`- Mode: ${isGlobal ? 'GLOBAL (Zero root project clutter)' : 'LOCAL (Project directory)'}`);
     console.log(`- Claude Code hooks: ${claudePath}`);
     console.log(`- Gemini CLI / Antigravity hooks: ${geminiPath}`);
     if (gitHookPath) {

@@ -1,19 +1,25 @@
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 
 export interface GeneratedHooksResult {
   claudePath: string;
   geminiPath: string;
   gitHookPath?: string;
+  isGlobal: boolean;
 }
 
 /**
- * Generates automated agent hook configuration files across multiple AI coding hosts
- * (Claude Code, Gemini CLI / Antigravity), and installs the Git post-commit hook.
+ * Generates automated agent hook configuration files.
+ * By default (or with isGlobal = true), targets the user's HOME directory (~/.claude, ~/.gemini)
+ * so that ZERO configuration folders are added to the project root directory!
  */
-export function generateAgentHooks(rootDir: string = process.cwd()): GeneratedHooksResult {
-  // 1. Claude Code Hooks (.claude/settings.json)
-  const claudeDir = path.join(rootDir, '.claude');
+export function generateAgentHooks(
+  targetDir: string = os.homedir(),
+  isGlobal: boolean = true
+): GeneratedHooksResult {
+  // 1. Claude Code Hooks (~/.claude/settings.json or project .claude/settings.json)
+  const claudeDir = path.join(targetDir, '.claude');
   if (!fs.existsSync(claudeDir)) {
     fs.mkdirSync(claudeDir, { recursive: true });
   }
@@ -60,8 +66,8 @@ export function generateAgentHooks(rootDir: string = process.cwd()): GeneratedHo
 
   fs.writeFileSync(claudeSettingsPath, JSON.stringify(claudeHookConfig, null, 2), 'utf-8');
 
-  // 2. Gemini CLI / Antigravity Agent Hooks (.gemini/settings.json)
-  const geminiDir = path.join(rootDir, '.gemini');
+  // 2. Gemini CLI / Antigravity Agent Hooks (~/.gemini/settings.json or project .gemini/settings.json)
+  const geminiDir = path.join(targetDir, '.gemini');
   if (!fs.existsSync(geminiDir)) {
     fs.mkdirSync(geminiDir, { recursive: true });
   }
@@ -108,26 +114,41 @@ export function generateAgentHooks(rootDir: string = process.cwd()): GeneratedHo
 
   fs.writeFileSync(geminiSettingsPath, JSON.stringify(geminiHookConfig, null, 2), 'utf-8');
 
-  // 3. Git post-commit hook (.git/hooks/post-commit)
-  const gitDir = path.join(rootDir, '.git');
+  // 3. Git post-commit hook (Global ~/.config/git/hooks/post-commit or project .git/hooks/post-commit)
   let gitHookPath: string | undefined;
 
-  if (fs.existsSync(gitDir)) {
-    const gitHooksDir = path.join(gitDir, 'hooks');
-    if (!fs.existsSync(gitHooksDir)) {
-      fs.mkdirSync(gitHooksDir, { recursive: true });
+  if (isGlobal) {
+    const globalGitHooksDir = path.join(os.homedir(), '.config', 'git', 'hooks');
+    if (!fs.existsSync(globalGitHooksDir)) {
+      fs.mkdirSync(globalGitHooksDir, { recursive: true });
     }
-
-    gitHookPath = path.join(gitHooksDir, 'post-commit');
-    const gitHookScript = `#!/bin/sh\n# Formalin Automated Preference Record Hook\nnpx formalin record\n`;
-
+    gitHookPath = path.join(globalGitHooksDir, 'post-commit');
+    const gitHookScript = `#!/bin/sh\n# Formalin Global Automated Preference Record Hook\nnpx formalin record\n`;
     fs.writeFileSync(gitHookPath, gitHookScript, 'utf-8');
     try {
       fs.chmodSync(gitHookPath, 0o755);
     } catch {
       // Ignore chmod errors
     }
+  } else {
+    const gitDir = path.join(targetDir, '.git');
+    if (fs.existsSync(gitDir)) {
+      const gitHooksDir = path.join(gitDir, 'hooks');
+      if (!fs.existsSync(gitHooksDir)) {
+        fs.mkdirSync(gitHooksDir, { recursive: true });
+      }
+
+      gitHookPath = path.join(gitHooksDir, 'post-commit');
+      const gitHookScript = `#!/bin/sh\n# Formalin Local Automated Preference Record Hook\nnpx formalin record\n`;
+
+      fs.writeFileSync(gitHookPath, gitHookScript, 'utf-8');
+      try {
+        fs.chmodSync(gitHookPath, 0o755);
+      } catch {
+        // Ignore chmod errors
+      }
+    }
   }
 
-  return { claudePath: claudeSettingsPath, geminiPath: geminiSettingsPath, gitHookPath };
+  return { claudePath: claudeSettingsPath, geminiPath: geminiSettingsPath, gitHookPath, isGlobal };
 }
