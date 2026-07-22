@@ -3,6 +3,7 @@
 import { Command } from 'commander';
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 import { evaluateNarrativeBrief } from './layer0/detector.js';
 import { saveSnapshot, loadSnapshots } from './layer1/snapshot.js';
 import { extractDeltas } from './layer1/extractor.js';
@@ -15,21 +16,52 @@ const program = new Command();
 program
   .name('formalin')
   .description('A 100% Automatic Layered Anti-Genericness Engine for AI Coding Agents')
-  .version('0.1.0');
+  .version('1.0.0');
 
 program
   .command('init')
-  .description('Initialize local preference profile and generate automated agent lifecycle hooks')
+  .description('Initialize local preference profile, agent hooks, and Git post-commit hook')
   .action(() => {
     const rootDir = process.cwd();
     const profile = getInitialProfile();
     saveProfile(profile, rootDir);
 
-    const settingsPath = generateAgentHooks(rootDir);
+    const { claudePath, gitHookPath } = generateAgentHooks(rootDir);
 
-    console.log('Formalin preference profile initialized at .formalin/profile.json');
-    console.log(`Automated agent hooks generated at ${settingsPath}`);
-    console.log('\nFormalin will now run 100% automatically in the background via agent hooks!');
+    console.log('Formalin v1.0 initialized!');
+    console.log(`- Preference profile: .formalin/profile.json`);
+    console.log(`- Agent lifecycle hooks: ${claudePath}`);
+    if (gitHookPath) {
+      console.log(`- Git post-commit hook: ${gitHookPath}`);
+    }
+    console.log('\nFormalin is active and running 100% automatically in the background!');
+  });
+
+program
+  .command('install-plugin')
+  .description('Install Formalin as a global plugin in ~/.gemini/config/plugins/formalin')
+  .action(() => {
+    const homeDir = os.homedir();
+    const globalPluginsDir = path.join(homeDir, '.gemini', 'config', 'plugins');
+    const targetPluginDir = path.join(globalPluginsDir, 'formalin');
+
+    if (!fs.existsSync(globalPluginsDir)) {
+      fs.mkdirSync(globalPluginsDir, { recursive: true });
+    }
+
+    const currentRepoDir = process.cwd();
+    if (fs.existsSync(targetPluginDir)) {
+      fs.rmSync(targetPluginDir, { recursive: true, force: true });
+    }
+
+    try {
+      fs.symlinkSync(currentRepoDir, targetPluginDir, 'dir');
+      console.log(`Successfully installed Formalin global plugin to ${targetPluginDir}`);
+    } catch {
+      // Fallback to copy if symlink fails
+      fs.cpSync(currentRepoDir, targetPluginDir, { recursive: true });
+      console.log(`Successfully copied Formalin global plugin to ${targetPluginDir}`);
+    }
   });
 
 program
@@ -77,7 +109,7 @@ program
     const snapshots = loadSnapshots(rootDir);
 
     if (snapshots.length === 0) {
-      console.log('No shadow snapshots found in .formalin/shadow/. Run "formalin snapshot <file>" or trigger via agent hooks.');
+      console.log('No shadow snapshots found in .formalin/shadow/. Triggered via agent hooks or git post-commit.');
       return;
     }
 

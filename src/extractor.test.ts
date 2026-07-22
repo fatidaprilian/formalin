@@ -4,9 +4,10 @@ import { evaluateNarrativeBrief } from './layer0/detector.js';
 import { extractDeltas } from './layer1/extractor.js';
 import { getInitialProfile } from './layer1/aggregator.js';
 import { compileBrief, compileChecklist } from './compiler/compiler.js';
+import { generateAgentHooks } from './hooks/generator.js';
 
 test('evaluateNarrativeBrief rejects brief with dense buzzwords and no specific constraint', () => {
-  const genericBrief = 'We want an innovative and seamless dashboard for an elevated user experience.';
+  const genericBrief = 'We want an innovative, seamless, and cutting-edge dashboard for an elevated user experience.';
   const result = evaluateNarrativeBrief(genericBrief);
 
   assert.strictEqual(result.passed, false);
@@ -33,6 +34,16 @@ test('extractDeltas detects spacing density shift from tight to generous', () =>
   assert.strictEqual(spacingDelta!.delta > 0, true);
 });
 
+test('extractDeltas detects typography character shift', () => {
+  const aiContent = '<div className="font-sans">Title</div>';
+  const devContent = '<div className="font-mono">Title</div>';
+
+  const deltas = extractDeltas(aiContent, devContent);
+  const typoDelta = deltas.find(d => d.dimension === 'typography_character');
+  assert.notStrictEqual(typoDelta, undefined);
+  assert.strictEqual(typoDelta!.delta > 0, true);
+});
+
 test('compileBrief generates concrete design defaults', () => {
   const profile = getInitialProfile();
   profile.dimensions.spacing_density.value = 0.58;
@@ -49,4 +60,9 @@ test('compileChecklist generates verification questions', () => {
 
   const checklist = compileChecklist(profile);
   assert.strictEqual(checklist.includes('generous density'), true);
+});
+
+test('generateAgentHooks generates claude settings path', () => {
+  const result = generateAgentHooks(process.cwd());
+  assert.strictEqual(typeof result.claudePath, 'string');
 });

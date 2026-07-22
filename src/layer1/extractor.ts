@@ -16,7 +16,7 @@ const TAILWIND_SHADOW_SCALE: Record<string, number> = {
 export function extractDeltas(aiContent: string, devContent: string): DeltaSignal[] {
   const deltas: DeltaSignal[] = [];
 
-  // Spacing Scale Delta
+  // 1. Spacing Scale Delta
   const aiSpacingMatches = aiContent.match(/\b(p|px|py|pt|pb|pl|pr|m|mx|my|mt|mb|ml|mr|gap)-([0-9.]+)\b/g) || [];
   const devSpacingMatches = devContent.match(/\b(p|px|py|pt|pb|pl|pr|m|mx|my|mt|mb|ml|mr|gap)-([0-9.]+)\b/g) || [];
 
@@ -32,7 +32,7 @@ export function extractDeltas(aiContent: string, devContent: string): DeltaSigna
     });
   }
 
-  // Corner Radius Delta
+  // 2. Corner Radius Delta
   const aiRadiusMatches = aiContent.match(/\brounded-(none|sm|md|lg|xl|2xl|3xl|full)\b/g) || [];
   const devRadiusMatches = devContent.match(/\brounded-(none|sm|md|lg|xl|2xl|3xl|full)\b/g) || [];
 
@@ -48,7 +48,7 @@ export function extractDeltas(aiContent: string, devContent: string): DeltaSigna
     });
   }
 
-  // Depth & Shadow Delta
+  // 3. Depth & Shadow Delta
   const aiShadowMatches = aiContent.match(/\bshadow-(none|sm|md|lg|xl|2xl|inner)\b/g) || [];
   const devShadowMatches = devContent.match(/\bshadow-(none|sm|md|lg|xl|2xl|inner)\b/g) || [];
 
@@ -64,7 +64,7 @@ export function extractDeltas(aiContent: string, devContent: string): DeltaSigna
     });
   }
 
-  // Saturation & Temperature Delta
+  // 4. Color Restraint & Temperature Delta
   const vibrantColors = ['purple', 'violet', 'indigo', 'pink', 'fuchsia', 'cyan'];
   let aiVibrantCount = 0;
   let devVibrantCount = 0;
@@ -83,6 +83,18 @@ export function extractDeltas(aiContent: string, devContent: string): DeltaSigna
       dimension: 'color_temperature',
       delta: -0.20,
       reason: `Developer shifted color temperature towards cool slate/neutral tones.`
+    });
+  }
+
+  // 5. Typography Character Delta (Font Family / Weight)
+  const aiFontMono = (aiContent.match(/\bfont-(mono|serif)\b/g) || []).length;
+  const devFontMono = (devContent.match(/\bfont-(mono|serif)\b/g) || []).length;
+
+  if (devFontMono > aiFontMono) {
+    deltas.push({
+      dimension: 'typography_character',
+      delta: 0.30,
+      reason: `Developer added distinctive font-mono/font-serif typography tokens.`
     });
   }
 

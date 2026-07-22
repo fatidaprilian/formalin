@@ -1,4 +1,4 @@
-# Formalin
+# Formalin (v1.0.0)
 
 > **A 100% Automatic Layered Anti-Genericness Engine for AI Coding Agents.**
 > Stop feeding static design manifestos or typing manual CLI commands. Formalin operates 100% automatically in the background via agent lifecycle hooks—gating generic narrative briefs, learning visual preferences from real edits, and injecting custom design defaults into your AI coding sessions.
@@ -35,10 +35,16 @@ Developer Commit            Git post-commit           Extracts deltas and update
 
 ## Quickstart
 
-Initialize local profile & automatically generate agent hook configuration:
+Initialize local profile, agent hooks, and Git post-commit hook:
 
 ```bash
 npx formalin init
+```
+
+To install Formalin as a global plugin across all projects:
+
+```bash
+npx formalin install-plugin
 ```
 
 That's it! Once initialized, open your AI coding agent as usual. Formalin runs 100% automatically in the background.

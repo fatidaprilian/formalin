@@ -10,7 +10,11 @@ const BUZZWORD_BLACKLIST = [
   'elevate',
   'world-class',
   'state-of-the-art',
-  'next-generation'
+  'next-generation',
+  'disruptive',
+  'game-changer',
+  'best-in-class',
+  'frictionless'
 ];
 
 /**
@@ -32,20 +36,27 @@ export function evaluateNarrativeBrief(briefText: string): Layer0GateResult {
     reasons.push(`Contains dense usage of generic buzzwords: [${flaggedBuzzwords.join(', ')}].`);
   }
 
-  // 2. Check for Specific Project Signals / Named References
-  const hasSpecificConstraint = briefText.length > 30 && (
+  // 2. Check for Specific Project Signals / Named References / Mood Constraints
+  const hasSpecificConstraint = briefText.length > 25 && (
     /for\s+[a-z0-9_-]+/i.test(briefText) ||
     /avoid\s+[a-z0-9_-]+/i.test(briefText) ||
     /prefer\s+[a-z0-9_-]+/i.test(briefText) ||
-    /style:\s+[a-z0-9_-]+/i.test(briefText)
+    /style:\s+[a-z0-9_-]+/i.test(briefText) ||
+    /quiet|editorial|industrial|monochrome|contemplative|architectural/i.test(briefText)
   );
 
   if (!hasSpecificConstraint) {
     reasons.push('Lacks specific project constraints, named references, or mood boundaries.');
   }
 
+  // 3. Structural Rigidity Check
+  const containsTemplateHeaders = /#\s*(overview|goals|style)/i.test(briefText);
+  if (containsTemplateHeaders && flaggedBuzzwords.length > 0) {
+    reasons.push('Adheres to a rigid generic brief template without distinct project character.');
+  }
+
   const passed = flaggedBuzzwords.length < 2 && hasSpecificConstraint;
-  const score = Math.max(0, 100 - (flaggedBuzzwords.length * 25) - (hasSpecificConstraint ? 0 : 35));
+  const score = Math.max(0, 100 - (flaggedBuzzwords.length * 20) - (hasSpecificConstraint ? 0 : 30));
 
   return {
     passed,
