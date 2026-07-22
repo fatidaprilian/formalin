@@ -1,54 +1,33 @@
-# Formalin v1.0 Roadmap & Concept Specification
+# Formalin v1.0 Roadmap & Plugin Specifications
 
-Formalin is an automatic design preference learning engine for AI coding agents. It captures AI-written code at write-time into a local shadow store via agent hooks, diffs the shadow snapshots against final committed code, and compiles learned visual design preferences into compact context blocks.
+Formalin is a standalone global plugin for AI coding agents. Operating as an autonomous AST & class-string sanitizer, Formalin intercepts frontend code writes (`.tsx`, `.jsx`, `.css`, `tailwind.config.*`) and deterministically strips "AI Slop Centroid" patterns without requiring manual `DESIGN.md` manifestos, browser rendering (CDP/Playwright), or root project file clutter.
 
 ---
 
 ## Product Promise v1.0
 
-> Formalin infers how a developer actually designs by analyzing write-time AI code proposals against final committed edits, updating a lightweight preference profile, and compiling it into concrete pre-generation briefs and post-generation verification checklists for AI coding agents.
+> Formalin operates as a silent, global plugin that intercept AI-generated frontend code, stripping generic AI slop signatures (purple gradients, floating shadows, chaotic spacing) and normalizing tokens into crisp, production-grade design system standards deterministically.
 
 ---
 
-## Core Scored Dimensions
+## Technical Pillars
 
-Formalin maintains a small, fixed profile in `.formalin/profile.json` storing scored preference dimensions (-1.0 to +1.0) with confidence bounds:
-
-| Dimension | -1.0 Extreme | +1.0 Extreme | What's tracked |
-| :--- | :--- | :--- | :--- |
-| `color_temperature` | Cool / Slate | Warm / Amber | Hue shift deltas in color tokens |
-| `saturation_restraint` | Desaturated / Muted | Saturated / Vibrant | Color saturation deltas |
-| `spacing_density` | Tight / Compact (`gap-2`) | Generous / Spaced (`gap-6`) | Padding, margin, and gap scale steps |
-| `radius_preference` | Sharp / Square (`rounded-none`) | Soft / Rounded (`rounded-full`) | Border radius token modifications |
-| `depth_style` | Flat / Border-led | Elevated / Shadow-led | Drop shadow additions or removals |
-| `typography_character` | System / Neutral | Editorial / Distinctive | Font family and weight selections |
-
----
-
-## Non-Goals (v1.0 Scope Boundaries)
-
-To prevent scope creep, Formalin v1.0 explicitly excludes:
-- **No CDP / Playwright / Browser Rendering:** All analysis is static text and AST diffing.
-- **No Vision LLM Calls:** No screenshot captures or image processing.
-- **No Git Commit Trailers (`Co-Authored-By`):** Uses write-time agent hook shadow snapshots instead of git commit conventions.
-- **No Mandatory MCP Server:** v1.0 is a standalone CLI tool that generates Markdown context blocks.
-- **No Manually-Written Manifestos:** Profile is built exclusively from implicit edits.
+- **100% Global Plugin:** Installs in `~/.gemini/config/plugins/formalin`. Zero files created in project root directories.
+- **Deterministic Token Transformation:** Pure AST/Regex class string transformation in <5ms.
+- **Zero Token Cost:** 0 additional LLM token overhead and 0 browser rendering.
 
 ---
 
 ## Development Roadmap
 
-### Phase 1: Write-Time Shadow Snapshot Store (`formalin snapshot`)
-- [ ] Implement write-time file shadow capturing into `.formalin/shadow/`.
-- [ ] Generate agent hook configuration snippets (`.claude/settings.json`).
+### Phase 1: Core AST & Tailwind Class Sanitizer Engine (v0.1 Goal)
+- [x] Implement Tailwind class string parser and transformer (`src/sanitizer/sanitizer.ts`).
+- [x] Implement AI Slop Centroid stripping (shadows, rounded corners, saturated gradients).
+- [x] Implement modular spacing scale normalizer.
 
-### Phase 2: Delta Extraction Engine (`formalin record`)
-- [ ] Implement AST / Tailwind class diffing comparing committed code against shadow snapshots.
-- [ ] Extract deltas for spacing, color tokens, border radius, and shadow tokens.
+### Phase 2: Global Plugin Integration & Manifest (v0.1 Goal)
+- [x] Create `plugin.json` manifest and `skills/formalin-sanitizer/SKILL.md`.
+- [x] Implement CLI entrypoint for file sanitization (`npx formalin sanitize <filepath>`).
 
-### Phase 3: Preference Aggregation & Profile (`formalin init`)
-- [ ] Implement `.formalin/profile.json` initializer and scoring update algorithm.
-
-### Phase 4: Context Compiler (`formalin brief` & `formalin check`)
-- [ ] Implement pre-generation brief compiler (`formalin brief`).
-- [ ] Implement post-generation checklist compiler (`formalin check`).
+### Phase 3: Advanced React/JSX AST Node Parser (v0.2 Goal)
+- [ ] Add `@babel/parser` / `@swc/core` deep AST traversal for React JSX elements.

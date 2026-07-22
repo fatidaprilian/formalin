@@ -1,0 +1,12 @@
+{
+  "name": "formalin",
+  "version": "0.1.0",
+  "description": "Global Deterministic UI Sanitizer Plugin for AI Coding Agents",
+  "skills": [
+    {
+      "name": "formalin-sanitizer",
+      "path": "skills/formalin-sanitizer/SKILL.md",
+      "description": "Automatically sanitizes AI Slop centroids in TSX/JSX and CSS class strings."
+    }
+  ]
+}
