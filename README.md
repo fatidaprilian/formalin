@@ -1,64 +1,47 @@
 # Formalin
 
-> **Global Deterministic UI Sanitizer Plugin for AI Coding Agents.**
-> Eliminate AI Slop centroids automatically. Formalin intercepts generated frontend code and transforms generic Tailwind/CSS class strings into crisp, production-grade design system tokens deterministically—with zero project root file clutter, zero token overhead, and zero browser rendering.
+> **A 100% Automatic Layered Anti-Genericness Engine for AI Coding Agents.**
+> Stop feeding static design manifestos or typing manual CLI commands. Formalin operates 100% automatically in the background via agent lifecycle hooks—gating generic narrative briefs, learning visual preferences from real edits, and injecting custom design defaults into your AI coding sessions.
 
 ---
 
 ## Why Formalin?
 
-AI coding agents (Claude Code, Cursor, Codex, Gemini CLI) generate generic "AI slop" (default purple gradients, identical floating shadows, chaotic spacing scales) because LLMs default to the safest statistical average in their training data.
+AI coding agents (Claude Code, Cursor, Codex, Gemini CLI) generate generic "AI slop" because LLMs revert to the safest statistical average in their training data.
 
-Existing solutions have major drawbacks:
-1. **Post-hoc Screenshot Loops (CDP/Playwright):** Slow, expensive in time and tokens, and reliant on approximate vision models.
-2. **Static Design Manifestos (`DESIGN.md`):** Require manual writing, clutter project root directories, and waste prompt tokens.
-3. **Prompt Anti-Slop Rules:** LLMs frequently ignore or distort prompt instructions under long context windows.
+Hardcoded rule substitution tools (e.g. "always replace Inter with Geist" or "always replace shadow-lg with borders") fail because **a shared static rulebook manufactures a new cliché within months**.
 
-**Formalin takes a deterministic, global path:** It operates as a global agent plugin (`~/.gemini/config/plugins/formalin`) that intercepts generated frontend code and sanitizes AI slop class strings deterministically in less than 5ms.
-
----
-
-## Core Capabilities
-
-- **Zero Root Clutter:** Installed 100% globally. Zero files added to your workspace project root directories.
-- **AI Slop Centroid Stripping:** Replaces generic drop shadows (`shadow-lg`), rounded corners (`rounded-xl`), and saturated purple gradients with crisp border tokens and neutral palettes.
-- **Modular Spacing Normalization:** Aligns chaotic spacing classes (`p-3`, `gap-5`) to strict modular scale tokens (`p-4`, `gap-6`).
-- **Zero Token Cost & Latency:** Runs as a pure AST & class string transformer in <5ms without additional LLM token calls or browser execution.
+Formalin solves this via a **two-layer architecture**:
+1. **Layer 0 (Narrative Genericness Gate):** Rejects lazy, generic creative briefs before a single line of code is written.
+2. **Layer 1 (Learned Preference Engine):** Learns what *this specific developer* keeps vs reverts from write-time shadow snapshots without polluting Git history.
 
 ---
 
-## Plugin Manifest & Installation
+## 100% Automatic Lifecycle Hook Architecture
 
-Formalin is packaged as a global AI agent plugin:
+Formalin runs completely in the background via agent lifecycle hooks:
 
-```json
-{
-  "name": "formalin",
-  "version": "0.1.0",
-  "description": "Global Deterministic UI Sanitizer Plugin for AI Coding Agents",
-  "skills": [
-    {
-      "name": "formalin-sanitizer",
-      "path": "skills/formalin-sanitizer/SKILL.md",
-      "description": "Automatically sanitizes AI Slop centroids in TSX/JSX and CSS class strings."
-    }
-  ]
-}
+```text
+Lifecycle Event             Trigger Hook              Formalin Action
+------------------          ------------              ---------------
+Session Start               SessionStart              Injects pre-generation brief into agent context
+Pre-First Write             PreToolUse (Write|Edit)   Runs Layer 0 Narrative Genericness Gate
+Write/Edit Executed         PostToolUse (Write|Edit)  Captures write-time snapshot into .formalin/shadow/
+Session Task Completion     Stop                      Verifies post-generation checklist
+Developer Commit            Git post-commit           Extracts deltas and updates .formalin/profile.json
 ```
 
 ---
 
-## Quickstart CLI Commands
+## Quickstart
 
-Sanitize a TSX/JSX component file in place:
+Initialize local profile & automatically generate agent hook configuration:
+
 ```bash
-npx formalin sanitize src/components/Hero.tsx
+npx formalin init
 ```
 
-Inspect and sanitize a raw Tailwind class string:
-```bash
-npx formalin inspect-class "p-3 bg-purple-600 rounded-xl shadow-lg"
-```
+That's it! Once initialized, open your AI coding agent as usual. Formalin runs 100% automatically in the background.
 
 ---
 
