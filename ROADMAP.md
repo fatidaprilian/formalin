@@ -1,12 +1,12 @@
 # Formalin v1.0 Roadmap & Concept Specification
 
-Formalin is an automatic design preference learning engine for AI coding agents. It infers a developer's visual design preferences directly from Git commit history—without browser rendering, screenshots, or vision models—and compiles those preferences into compact, token-efficient context blocks.
+Formalin is an automatic design preference learning engine for AI coding agents. It captures AI-written code at write-time into a local shadow store via agent hooks, diffs the shadow snapshots against final committed code, and compiles learned visual design preferences into compact context blocks.
 
 ---
 
 ## Product Promise v1.0
 
-> Formalin infers how a developer actually designs by analyzing text-level diffs on frontend code in Git commits, updating a lightweight preference profile, and compiling it into concrete pre-generation briefs and post-generation verification checklists for AI coding agents.
+> Formalin infers how a developer actually designs by analyzing write-time AI code proposals against final committed edits, updating a lightweight preference profile, and compiling it into concrete pre-generation briefs and post-generation verification checklists for AI coding agents.
 
 ---
 
@@ -30,27 +30,25 @@ Formalin maintains a small, fixed profile in `.formalin/profile.json` storing sc
 To prevent scope creep, Formalin v1.0 explicitly excludes:
 - **No CDP / Playwright / Browser Rendering:** All analysis is static text and AST diffing.
 - **No Vision LLM Calls:** No screenshot captures or image processing.
-- **No Mandatory MCP Server:** v1.0 is a standalone CLI tool that generates Markdown context blocks. (MCP server can be an optional layer later).
-- **No Manually-Written Manifestos:** Profile is built exclusively from implicit Git commit edits.
+- **No Git Commit Trailers (`Co-Authored-By`):** Uses write-time agent hook shadow snapshots instead of git commit conventions.
+- **No Mandatory MCP Server:** v1.0 is a standalone CLI tool that generates Markdown context blocks.
+- **No Manually-Written Manifestos:** Profile is built exclusively from implicit edits.
 
 ---
 
 ## Development Roadmap
 
-### Phase 1: Signal Extraction Engine (v0.1 Goal)
-- [ ] Implement Git diff parser for `.tsx`, `.jsx`, `.css`, and `tailwind.config.*`.
-- [ ] Extract deltas for Tailwind spacing, color classes, border radius, and shadow tokens.
+### Phase 1: Write-Time Shadow Snapshot Store (`formalin snapshot`)
+- [ ] Implement write-time file shadow capturing into `.formalin/shadow/`.
+- [ ] Generate agent hook configuration snippets (`.claude/settings.json`).
 
-### Phase 2: Preference Aggregation & Scoring Profile (v0.1 Goal)
-- [ ] Implement `.formalin/profile.json` initializer (`formalin init`).
-- [ ] Implement incremental scoring updates with confidence weighting (`formalin record`).
+### Phase 2: Delta Extraction Engine (`formalin record`)
+- [ ] Implement AST / Tailwind class diffing comparing committed code against shadow snapshots.
+- [ ] Extract deltas for spacing, color tokens, border radius, and shadow tokens.
 
-### Phase 3: Context Compiler (v0.1 Goal)
+### Phase 3: Preference Aggregation & Profile (`formalin init`)
+- [ ] Implement `.formalin/profile.json` initializer and scoring update algorithm.
+
+### Phase 4: Context Compiler (`formalin brief` & `formalin check`)
 - [ ] Implement pre-generation brief compiler (`formalin brief`).
 - [ ] Implement post-generation checklist compiler (`formalin check`).
-
-### Phase 4: Micro-Calibration Onboarding (v0.2 Goal)
-- [ ] Implement 4-8 pairwise component questions for cold-start initialization (`formalin calibrate`).
-
-### Phase 5: Optional MCP Adapter Layer (v0.3 Goal)
-- [ ] Provide optional Model Context Protocol (MCP) wrapper for seamless agent integration.
